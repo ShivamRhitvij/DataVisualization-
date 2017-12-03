@@ -1,2 +1,3 @@
-# DataVisulizationAssignment2
-Assignment 2 
+# Data Visulization
+This is repository of work done during the course MIS6380 Data Visulization by group 9.
+

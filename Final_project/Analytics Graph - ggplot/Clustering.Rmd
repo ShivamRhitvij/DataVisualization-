@@ -1,0 +1,52 @@
+---
+title: " Using kmeans to assign a cluster to each row (i.e., customer)"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r libs}
+library(ggplot2)
+library(scales)
+```
+```{r pressure, echo=FALSE}
+no_of_centers = 6
+survey.df <- read.csv('Online_betting_wrt_countries - Billion Euro.csv', header=TRUE)
+survey.df
+kmeans.model <- kmeans(survey.df[,c("Sports.in.Bilion.dollar.","No..of..Popular.Sport.Bet.Online")], centers = no_of_centers, nstart=5) 
+survey.df$cluster <- as.factor(kmeans.model$cluster) # add cluster assignments (as categorical value) to original data frame
+
+p <- ggplot(survey.df) 
+p +	geom_point(aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online, fill = cluster), size = 10, shape = 21, color = "white")
+  
+
+# Adding the centers of the clusters as another geom_point layer
+p +	geom_point(aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online, fill = cluster), size = 10, shape = 21, color = "white") +
+  geom_point(data = data.frame(kmeans.model$centers), aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online), size = 12, color = "gray") + 
+  scale_fill_brewer(palette="Spectral")
+
+# Adding lines between the customers and center of cluster via line geoms. The geom_segment needs a start x and y and an end e and y. The start x and y is the actual Happy and Helpful value, the end x and y is the center x and y
+for (i in 1:no_of_centers) { # for each cluster
+  survey.df$xend[survey.df$cluster == i] = kmeans.model$centers[i]
+  survey.df$yend[survey.df$cluster == i] = kmeans.model$centers[i + no_of_centers]
+}
+
+p +	geom_segment(data = survey.df, aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online, xend = xend, yend = yend, color = "gray")) +
+  geom_point(aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online, fill = cluster), size = 6, shape = 21, color = "white") +
+  geom_point(data = data.frame(kmeans.model$centers), aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online), size = 1, color = "black", alpha=0.3) + 
+  geom_text(aes(x = Sports.in.Bilion.dollar., y = No..of..Popular.Sport.Bet.Online, label=Country),hjust=0, vjust=-1, angle=45, size = 3) +
+  scale_y_continuous(name = "No. of Popular Sport Bet Online", limit=c(0,7)) +
+  scale_x_continuous(name = "Betting Operators Earnings(in Billion $)", limit=c(0,2), labels=dollar) + 
+  labs(title = "Best Country to Pitch-in") +
+  scale_fill_brewer(palette="Spectral") +
+  theme_bw()+
+  theme(legend.position="none")
+
+  
+
+```
